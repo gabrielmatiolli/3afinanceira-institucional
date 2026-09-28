@@ -1,0 +1,12 @@
+{
+  // Site 100% estático: o Worker só serve a pasta out/ gerada pelo `next build`.
+  // Sem este arquivo, o `wrangler deploy` tenta converter o projeto com OpenNext e falha.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "3afinanceira-institucional",
+  "compatibility_date": "2026-09-26",
+  "assets": {
+    "directory": "./out",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  }
+}
