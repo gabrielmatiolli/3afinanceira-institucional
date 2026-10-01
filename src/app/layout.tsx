@@ -63,7 +63,7 @@ const dadosEstruturados = {
   areaServed: "BR",
   address: {
     "@type": "PostalAddress",
-    streetAddress: empresa.endereco.logradouro,
+    streetAddress: `${empresa.endereco.logradouro}, ${empresa.endereco.complemento}, ${empresa.endereco.bairro}`,
     addressLocality: empresa.endereco.cidade,
     addressRegion: empresa.endereco.uf,
     postalCode: empresa.endereco.cep,

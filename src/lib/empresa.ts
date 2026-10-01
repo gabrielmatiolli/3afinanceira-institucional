@@ -9,10 +9,12 @@ export const empresa = {
   cnpj: "68.950.299/0001-89",
   fundacao: 2026,
   endereco: {
-    logradouro: "Rua Vera Cruz, 48",
+    logradouro: "Rua Coronel Antônio Rios, 1087",
+    complemento: "Sala 107",
+    bairro: "Santa Maria",
     cidade: "Uberaba",
     uf: "MG",
-    cep: "38022-060",
+    cep: "38061-150",
   },
   email: "adelino@3asolucoesfinanceiras.com.br",
   telefone: {
@@ -26,11 +28,11 @@ export const empresa = {
   site: "https://3asolucoesfinanceiras.com.br",
 } as const;
 
-export const enderecoCompleto = `${empresa.endereco.logradouro}, ${empresa.endereco.cidade}/${empresa.endereco.uf}, CEP ${empresa.endereco.cep}`;
+export const enderecoCompleto = `${empresa.endereco.logradouro}, ${empresa.endereco.complemento}, Bairro ${empresa.endereco.bairro}, ${empresa.endereco.cidade}/${empresa.endereco.uf}, CEP ${empresa.endereco.cep}`;
 
 // Endereço em duas partes, para quebrar a linha no lugar certo em telas estreitas.
 export const enderecoLinhas = [
-  `${empresa.endereco.logradouro},`,
+  `${empresa.endereco.logradouro}, ${empresa.endereco.complemento}, Bairro ${empresa.endereco.bairro},`,
   `${empresa.endereco.cidade}/${empresa.endereco.uf}, CEP ${empresa.endereco.cep}`,
 ] as const;
 
