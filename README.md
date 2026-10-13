@@ -17,17 +17,29 @@ npm run build    # gera a pasta out/
 - `src/app/politica-de-privacidade` e `src/app/termos-de-uso`: páginas legais (a Meta exige a política).
 - `src/app/globals.css`: paleta e fontes da marca (Sora, Newsreader e IBM Plex Mono).
 
-## Formulário
+## Formulário de contato
 
-Sem configuração, o formulário abre o e-mail do visitante já preenchido para `adelino@3asolucoesfinanceiras.com.br`.
-Para receber os envios direto, crie um formulário no Formspree (ou serviço compatível que aceite JSON) e defina
-no build do Cloudflare Pages:
+O formulário envia para `/api/contato`, atendido pelo Worker em `worker/index.ts`. Ele valida os dados,
+descarta robôs (campo-isca) e manda o e-mail por SMTP do Zoho com a biblioteca
+[worker-mailer](https://github.com/zou-yu/worker-mailer) (MIT, gratuita). O nodemailer não funciona no
+Cloudflare Workers porque depende dos módulos `net`/`tls` do Node.
 
+Configuração em `wrangler.jsonc` (`vars`): servidor, porta, conta remetente e destinatário.
+A senha **não** fica no repositório; cadastre uma vez como secret:
+
+```bash
+npx wrangler secret put SMTP_PASS
 ```
-NEXT_PUBLIC_FORM_ENDPOINT=https://formspree.io/f/xxxxxxx
-```
 
-## Deploy no Cloudflare Pages
+Se a conta do Zoho tiver verificação em duas etapas, use uma senha de aplicativo
+(Zoho Mail > Configurações > Segurança > Senhas específicas de aplicativo).
+Contas no datacenter da Índia/Europa usam `smtp.zoho.in` / `smtp.zoho.eu`.
+
+Para testar localmente, crie `.dev.vars` com `SMTP_PASS=...` e rode `npm run preview`
+(gera o `out/` e sobe o Worker em http://localhost:8787). No `npm run dev` o formulário
+não envia, porque a rota `/api` só existe no Worker.
+
+## Deploy no Cloudflare
 
 - Comando de build: `npm run build`
-- Diretório de saída: `out`
+- Comando de deploy: `npx wrangler deploy` (usa o `wrangler.jsonc`)

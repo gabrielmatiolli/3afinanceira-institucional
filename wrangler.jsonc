@@ -1,12 +1,25 @@
 {
-  // Site 100% estático: o Worker só serve a pasta out/ gerada pelo `next build`.
+  // O site é estático (pasta out/ gerada pelo `next build`). O Worker só entra
+  // em /api/*, para enviar o formulário de contato por SMTP.
   // Sem este arquivo, o `wrangler deploy` tenta converter o projeto com OpenNext e falha.
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "3afinanceira-institucional",
+  "main": "worker/index.ts",
   "compatibility_date": "2026-09-26",
+  "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": "./out",
+    "binding": "ASSETS",
     "html_handling": "auto-trailing-slash",
-    "not_found_handling": "404-page"
-  }
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/api/*"]
+  },
+  // Valores não secretos. A senha vai como secret: `npx wrangler secret put SMTP_PASS`.
+  "vars": {
+    "SMTP_HOST": "smtp.zoho.com",
+    "SMTP_PORT": "465",
+    "SMTP_USER": "adelino@3asolucoesfinanceiras.com.br",
+    "MAIL_TO": "adelino@3asolucoesfinanceiras.com.br"
+  },
+  "observability": { "enabled": true }
 }

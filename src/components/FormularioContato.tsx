@@ -5,9 +5,8 @@ import { useState } from "react";
 import { empresa } from "@/lib/empresa";
 import { IconeSeta, IconeWhatsApp } from "./Icones";
 
-// Se houver um endpoint (Formspree ou similar) configurado no build, o envio é
-// feito por ele. Sem endpoint, o formulário abre o e-mail já preenchido.
-const ENDPOINT = process.env.NEXT_PUBLIC_FORM_ENDPOINT;
+// O envio vai para o Worker do Cloudflare (worker/index.ts), que manda o e-mail por SMTP.
+const ENDPOINT = "/api/contato";
 
 type Estado = "ocioso" | "enviando" | "enviado" | "erro";
 
@@ -35,6 +34,7 @@ const rotulo = "font-mono text-[0.66rem] uppercase tracking-[0.14em] text-grafit
 
 export function FormularioContato() {
   const [estado, setEstado] = useState<Estado>("ocioso");
+  const [mensagemErro, setMensagemErro] = useState("");
 
   function dados(form: HTMLFormElement) {
     return Object.fromEntries(
@@ -46,21 +46,21 @@ export function FormularioContato() {
     e.preventDefault();
     const d = dados(e.currentTarget);
 
-    if (!ENDPOINT) {
-      const assunto = `Análise de carteira: ${d.empresa}`;
-      window.location.href = `mailto:${empresa.email}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(montarTexto(d))}`;
-      setEstado("enviado");
-      return;
-    }
-
     setEstado("enviando");
+    setMensagemErro("");
     try {
       const resposta = await fetch(ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ ...d, _subject: `Análise de carteira: ${d.empresa}` }),
+        body: JSON.stringify(d),
       });
-      setEstado(resposta.ok ? "enviado" : "erro");
+      if (resposta.ok) {
+        setEstado("enviado");
+        return;
+      }
+      const corpo = (await resposta.json().catch(() => null)) as { erro?: string } | null;
+      setMensagemErro(resposta.status === 400 && corpo?.erro ? corpo.erro : "");
+      setEstado("erro");
     } catch {
       setEstado("erro");
     }
@@ -81,9 +81,7 @@ export function FormularioContato() {
           Obrigado. <span className="font-semibold">Sua solicitação está com a gente.</span>
         </p>
         <p className="mt-4 font-serif text-[1.1rem] leading-relaxed text-grafite">
-          {ENDPOINT
-            ? "Recebemos os seus dados e vamos entrar em contato pelo telefone ou e-mail informado."
-            : `Se o seu programa de e-mail não abriu, escreva para ${empresa.email} ou fale conosco pelo WhatsApp.`}
+          Recebemos os seus dados e vamos entrar em contato pelo telefone ou e-mail informado.
         </p>
         <button
           type="button"
@@ -97,13 +95,20 @@ export function FormularioContato() {
   }
 
   return (
-    <form onSubmit={enviar} className="bg-white text-marinho">
+    <form onSubmit={enviar} className="relative bg-white text-marinho">
       <div className="flex items-center justify-between border-b border-marinho/80 px-5 py-3 font-mono text-[0.66rem] uppercase tracking-[0.14em] text-grafite sm:px-8">
         <span>Formulário 3A · 01</span>
         <span>Análise de carteira</span>
       </div>
 
       <div className="grid gap-x-8 gap-y-6 p-5 sm:grid-cols-2 sm:p-8">
+        {/* Campo-isca contra robôs: escondido de pessoas e leitores de tela. */}
+        <div aria-hidden className="absolute -left-[9999px] h-px w-px overflow-hidden">
+          <label>
+            Site
+            <input name="site" tabIndex={-1} autoComplete="off" />
+          </label>
+        </div>
         <label className="block">
           <span className={rotulo}>Seu nome</span>
           <input name="nome" required autoComplete="name" className={campo} />
@@ -196,7 +201,7 @@ export function FormularioContato() {
       </div>
       {estado === "erro" && (
         <p role="alert" className="border-t border-linha px-5 py-4 text-[0.9rem] text-red-700 sm:px-8">
-          Não foi possível enviar agora. Tente pelo WhatsApp ou escreva para {empresa.email}.
+          {mensagemErro || `Não foi possível enviar agora. Tente pelo WhatsApp ou escreva para ${empresa.email}.`}
         </p>
       )}
     </form>
